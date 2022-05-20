@@ -22,10 +22,14 @@ class Story {
   }
 
   /** Parses hostname out of URL and returns it. */
+   // UNIMPLEMENTED: complete this function!
 
   getHostName() {
-    // UNIMPLEMENTED: complete this function!
-    return "hostname.com";
+    let hostname = this.url.match(/[\w|\.]+((?=\/)|(?=$))/);
+    if (!hostname) {
+      return "Hostname not found";
+    }
+    return hostname[0];
   }
 }
 
