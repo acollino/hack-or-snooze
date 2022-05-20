@@ -56,6 +56,8 @@ class StoryList {
     //  **not** an instance method. Rather, it is a method that is called on the
     //  class directly. Why doesn't it make sense for getStories to be an
     //  instance method?
+    //  -The getStories method doesn't require anything that would be unique to
+    //    a StoryList instance, so it makes more sense to keep it a static method.
 
     // query the /stories endpoint (no auth required)
     const response = await axios({
@@ -77,8 +79,14 @@ class StoryList {
    * Returns the new Story instance
    */
 
-  async addStory( /* user, newStory */) {
-    // UNIMPLEMENTED: complete this function!
+  async addStory( user, newStory) {
+    const response = await axios.post(`${BASE_URL}/stories`, {
+      token: user.loginToken,
+      story: { ...newStory }
+    });
+    let addedStory = new Story(response.data.story);
+    this.stories.push(addedStory);
+    return addedStory;
   }
 }
 
