@@ -28,10 +28,23 @@ function hidePageComponents() {
   components.forEach(c => c.hide());
 }
 
+function setupEventListeners() {
+  $("#nav-submit").on("click", () => $("#submit-story-form").toggle());
+  $("#nav-favorites").on("click",);
+  $("#nav-my-stories").on("click",);
+  $("#nav-my-stories").on("click",);
+  $("#submit-story-button").on("click", () => {
+    addSubmittedStory();
+    $("#submit-story-form").toggle();
+  });
+}
+
 /** Overall function to kick off the app. */
 
 async function start() {
   console.debug("start");
+
+  setupEventListeners();
 
   // "Remember logged-in user" and log in, if credentials in localStorage
   await checkForRememberedUser();
