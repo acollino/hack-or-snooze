@@ -33,9 +33,9 @@ function setupEventListeners() {
   $("#nav-favorites").on("click",);
   $("#nav-my-stories").on("click",);
   $("#nav-my-stories").on("click",);
-  $("#submit-story-button").on("click", () => {
+  $("#submit-story-button").on("click", (evt) => {
+    evt.preventDefault();
     addSubmittedStory();
-    $("#submit-story-form").toggle();
   });
 }
 

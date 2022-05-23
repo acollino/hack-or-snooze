@@ -58,17 +58,18 @@
   <form id="submit-story-form" class="hidden" method="post">
     <div class="story-input">
       <label for="author">author</label>
-      <input id="story-author" type="text" name="author" placeholder="author name">
+      <input id="story-author" type="text" name="author" placeholder="author name" required>
     </div>
     <div class="story-input">
       <label for="title">title</label>
-      <input id="story-title" type="text" name="title" placeholder="story title">
+      <input id="story-title" type="text" name="title" placeholder="story title" required>
     </div>
     <div class="story-input">
       <label for="url">url</label>
-      <input id="story-url" type="text" name="url" placeholder="story url">
+      <input id="story-url" type="url" name="url" placeholder="story url" required>
     </div>
-    <button type="button" id="submit-story-button">Submit</button>
+    <!-- type="button" -->
+    <button id="submit-story-button">Submit</button>
     <hr>
   </form>
 

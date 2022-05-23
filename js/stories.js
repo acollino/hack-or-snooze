@@ -52,20 +52,28 @@ function putStoriesOnPage() {
 }
 
 async function addSubmittedStory() {
+  const $storyForm = $("#submit-story-form");
   let storyInput = {
     author: $("#story-author").val(),
     title: $("#story-title").val(),
     url: $("#story-url").val(),
+  };
+  if (!checkInputValidity($storyForm)) {
+    return;
   }
   try {
     let newStory = await storyList.addStory(currentUser, storyInput);
     $allStoriesList.prepend(generateStoryMarkup(newStory));
-    $("#submit-story-form").find('input[type="text"]').val("");
-  }
-  catch (error) {
+    $storyForm.find("input").val("");
+    $storyForm.hide();
+  } catch (error) {
     console.log(error);
   }
-  finally {
-    $("#submit-story-form").hide();
-  }
+}
+
+function checkInputValidity($form) {
+  let inputElementArray = $form.find("input").get();
+  return inputElementArray.every((element) => {
+    return element.reportValidity();
+  });
 }
