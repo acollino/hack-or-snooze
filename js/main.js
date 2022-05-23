@@ -37,6 +37,10 @@ function setupEventListeners() {
     evt.preventDefault();
     addSubmittedStory();
   });
+  $allStoriesList.on("click", "i", (evt) => {
+    $(evt.target).toggleClass("fa");
+    User.toggleStoryAsFavorite($(evt.target).parent().attr("id"));
+  })
 }
 
 /** Overall function to kick off the app. */
