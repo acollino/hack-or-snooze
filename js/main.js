@@ -30,7 +30,7 @@ function hidePageComponents() {
 
 function setupEventListeners() {
   $("#nav-submit").on("click", () => $("#submit-story-form").toggle());
-  $("#nav-favorites").on("click",);
+  $("#nav-favorites").on("click", putFavoritesOnPage);
   $("#nav-my-stories").on("click",);
   $("#nav-my-stories").on("click",);
   $("#submit-story-button").on("click", (evt) => {

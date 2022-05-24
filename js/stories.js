@@ -23,9 +23,13 @@ function generateStoryMarkup(story) {
   // console.debug("generateStoryMarkup", story);
 
   const hostName = story.getHostName();
+  let starType;
+  currentUser.isFavoriteStory(story.storyId)
+    ? starType = '"far fa-star fa"'
+    : starType = '"far fa-star"';
   return $(`
       <li id="${story.storyId}">
-        <i class="far fa-star"></i>
+        <i class=${starType}></i>
         <a href="${story.url}" target="a_blank" class="story-link">
           ${story.title}
         </a>
@@ -50,6 +54,18 @@ function putStoriesOnPage() {
   }
 
   $allStoriesList.show();
+}
+
+function putFavoritesOnPage() {
+  $allStoriesList.empty();
+  if (currentUser.favorites.length === 0) {
+    $allStoriesList.text("No favorite stories to show!");
+  } else {
+    for (let story of currentUser.favorites) {
+      const $story = generateStoryMarkup(new Story(story));
+      $allStoriesList.append($story);
+    }
+  }
 }
 
 async function addSubmittedStory() {

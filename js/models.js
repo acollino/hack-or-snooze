@@ -199,11 +199,16 @@ class User {
     }
   }
 
+  isFavoriteStory(storyID) {
+    return Boolean(
+      this.favorites.filter((story) => {
+        return story.storyId === storyID;
+      })[0]);
+  }
+
   static async toggleStoryAsFavorite(selectedStoryID) {
     let url = `${BASE_URL}/users/${currentUser.username}/favorites/${selectedStoryID}`;
-    let favoriteStatus = currentUser.favorites.filter((story) => {
-      return story.storyId === selectedStoryID;
-    })[0];
+    let favoriteStatus = currentUser.isFavoriteStory(selectedStoryID);
     let method;
     favoriteStatus ? (method = "delete") : (method = "post");
     let fetchInfo = {
@@ -214,11 +219,10 @@ class User {
     if (response.ok) {
       currentUser.favorites = (await response.json()).user.favorites;
       return currentUser.favorites;
-    }
-    else {
+    } else {
       return Promise.reject({
         status: response.status,
-        statusText: response.statusText
+        statusText: response.statusText,
       });
     }
   }
