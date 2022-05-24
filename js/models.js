@@ -83,7 +83,8 @@ class StoryList {
       story: { ...newStory },
     });
     let addedStory = new Story(response.data.story);
-    this.stories.push(addedStory);
+    this.stories.splice(0, 0, addedStory);
+    user.ownStories.splice(0, 0, addedStory);
     return addedStory;
   }
 }

@@ -20,24 +20,39 @@ async function getAndShowStoriesOnStart() {
  */
 
 function generateStoryMarkup(story) {
-  // console.debug("generateStoryMarkup", story);
-
   const hostName = story.getHostName();
-  let starType;
-  currentUser.isFavoriteStory(story.storyId)
-    ? (starType = '"far fa-star fa"')
-    : (starType = '"far fa-star"');
+  let { icons, userStyle } = generateStoryStyles(story);
   return $(`
       <li id="${story.storyId}">
-        <i class=${starType}></i>
+        ${icons}
         <a href="${story.url}" target="a_blank" class="story-link">
           ${story.title}
         </a>
         <small class="story-hostname">(${hostName})</small>
         <small class="story-author">by ${story.author}</small>
-        <small class="story-user">posted by ${story.username}</small>
+        <small class="story-user">${userStyle}</small>
       </li>
     `);
+}
+
+function generateStoryStyles(story) {
+  let starType;
+  currentUser.isFavoriteStory(story.storyId)
+    ? (starType = `<i class="far fa-star fa"></i>`)
+    : (starType = `<i class="far fa-star"></i>`);
+  let userStyle;
+  let trashType = "";
+  if (currentUser.username === story.username) {
+    userStyle = `posted by <b><i>${story.username}</i></b>`;
+    trashType = `<i class="far fa-trash-alt"></i>`;
+  } else {
+    userStyle = `posted by ${story.username}`;
+  }
+  let eyeType = `<i class="far fa-eye-slash"></i>`;
+  return {
+    icons: `${starType} ${eyeType} ${trashType}`,
+    userStyle
+  };
 }
 
 /** Gets list of stories from server, generates their HTML, and puts on page. */
@@ -112,7 +127,7 @@ $("#submit-story-button").on("click", (evt) => {
   addSubmittedStory();
 });
 
-$allStoriesList.on("click", "i", (evt) => {
+$allStoriesList.on("click", "i.fa-star", (evt) => {
   $(evt.target).toggleClass("fa");
   User.toggleStoryAsFavorite($(evt.target).parent().attr("id"));
 });
