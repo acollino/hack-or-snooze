@@ -13,6 +13,9 @@ function navAllStories(evt) {
 }
 
 $body.on("click", "#nav-all", navAllStories);
+$body.on("click", "#nav-submit", () => $("#submit-story-form").toggle());
+$body.on("click", "#nav-favorites", putFavoritesOnPage);
+// $body.on("click", "#nav-my-stories");
 
 /** Show login/signup on click on "login" */
 

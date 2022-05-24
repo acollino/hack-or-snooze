@@ -25,8 +25,8 @@ function generateStoryMarkup(story) {
   const hostName = story.getHostName();
   let starType;
   currentUser.isFavoriteStory(story.storyId)
-    ? starType = '"far fa-star fa"'
-    : starType = '"far fa-star"';
+    ? (starType = '"far fa-star fa"')
+    : (starType = '"far fa-star"');
   return $(`
       <li id="${story.storyId}">
         <i class=${starType}></i>
@@ -94,3 +94,13 @@ function checkInputValidity($form) {
     return element.reportValidity();
   });
 }
+
+$("#submit-story-button").on("click", (evt) => {
+  evt.preventDefault();
+  addSubmittedStory();
+});
+
+$allStoriesList.on("click", "i", (evt) => {
+  $(evt.target).toggleClass("fa");
+  User.toggleStoryAsFavorite($(evt.target).parent().attr("id"));
+});
