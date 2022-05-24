@@ -95,6 +95,18 @@ function checkInputValidity($form) {
   });
 }
 
+function putUserStoriesOnPage() {
+  $allStoriesList.empty();
+  if (currentUser.ownStories.length === 0) {
+    $allStoriesList.text("You haven't submitted any stories yet!");
+  } else {
+    for (let story of currentUser.ownStories) {
+      const $story = generateStoryMarkup(new Story(story));
+      $allStoriesList.append($story);
+    }
+  }
+}
+
 $("#submit-story-button").on("click", (evt) => {
   evt.preventDefault();
   addSubmittedStory();

@@ -24,24 +24,10 @@ function hidePageComponents() {
   components.forEach((c) => c.hide());
 }
 
-function setupEventListeners() {
-  // $("#nav-my-stories").on("click",);
-  // $("#submit-story-button").on("click", (evt) => {
-  //   evt.preventDefault();
-  //   addSubmittedStory();
-  // });
-  // $allStoriesList.on("click", "i", (evt) => {
-  //   $(evt.target).toggleClass("fa");
-  //   User.toggleStoryAsFavorite($(evt.target).parent().attr("id"));
-  // });
-}
-
 /** Overall function to kick off the app. */
 
 async function start() {
   console.debug("start");
-
-  setupEventListeners();
 
   // "Remember logged-in user" and log in, if credentials in localStorage
   await checkForRememberedUser();
