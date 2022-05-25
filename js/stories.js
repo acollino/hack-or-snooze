@@ -19,11 +19,11 @@ async function getAndShowStoriesOnStart() {
  * Returns the markup for the story.
  */
 
-function generateStoryMarkup(story) {
+function generateStoryMarkup(story, showHidden = false) {
   const hostName = story.getHostName();
-  let { icons, userStyle } = generateStoryStyles(story);
+  let { icons, userStyle, hidden } = generateStoryStyles(story, showHidden);
   return $(`
-      <li id="${story.storyId}">
+      <li id="${story.storyId}" ${hidden}>
         ${icons}
         <a href="${story.url}" target="a_blank" class="story-link">
           ${story.title}
@@ -35,52 +35,68 @@ function generateStoryMarkup(story) {
     `);
 }
 
-function generateStoryStyles(story) {
+function generateStoryStyles(story, showHidden = false) {
   let starType;
   currentUser.isFavoriteStory(story.storyId)
     ? (starType = `<i class="far fa-star fa"></i>`)
     : (starType = `<i class="far fa-star"></i>`);
+  let hidden = "";
+  if (currentUser.isHiddenStory(story.storyId) && !showHidden) {
+    hidden = `style="display: none"`;
+  }
   let userStyle;
-  let trashType = "";
+  let trash = "";
   if (currentUser.username === story.username) {
     userStyle = `posted by <b><i>${story.username}</i></b>`;
-    trashType = `<i class="far fa-trash-alt"></i>`;
+    trash = `<i class="far fa-trash-alt"></i>`;
   } else {
     userStyle = `posted by ${story.username}`;
   }
-  let eyeType = `<i class="far fa-eye-slash"></i>`;
+  let eye;
+  showHidden
+    ? (eye = `<i class="far fa-eye"></i>`)
+    : (eye = `<i class="far fa-eye-slash"></i>`);
   return {
-    icons: `${starType} ${eyeType} ${trashType}`,
-    userStyle
+    icons: `${starType} ${eye} ${trash}`,
+    userStyle,
+    hidden,
   };
 }
 
-/** Gets list of stories from server, generates their HTML, and puts on page. */
-
-function putStoriesOnPage() {
-  console.debug("putStoriesOnPage");
-
+function showStoriesFromCategory(emptyMessage, storyCategory = "") {
   $allStoriesList.empty();
-
-  // loop through all of our stories and generate HTML for them
-  for (let story of storyList.stories) {
-    const $story = generateStoryMarkup(story);
-    $allStoriesList.append($story);
-  }
-
-  $allStoriesList.show();
-}
-
-function putFavoritesOnPage() {
-  $allStoriesList.empty();
-  if (currentUser.favorites.length === 0) {
-    $allStoriesList.text("No favorite stories to show!");
+  let storyContainer;
+  storyCategory === ""
+    ? storyContainer = storyList.stories
+    : storyContainer = currentUser[storyCategory];
+  if (storyContainer.length === 0) {
+    $allStoriesList.text(emptyMessage);
   } else {
-    for (let story of currentUser.favorites) {
-      const $story = generateStoryMarkup(new Story(story));
+    for (let story of storyContainer) {
+      let $story;
+      storyCategory === "hidden"
+        ? $story = generateStoryMarkup(new Story(story), true)
+        : $story = generateStoryMarkup(new Story(story));
       $allStoriesList.append($story);
     }
   }
+  $allStoriesList.show();
+}
+
+function putStoriesOnPage() {
+  showStoriesFromCategory("No stories left to show you!");
+}
+
+function putFavoritesOnPage() {
+  showStoriesFromCategory("You have no favorites yet!", "favorites");
+}
+
+function putUserStoriesOnPage() {
+  showStoriesFromCategory("You have not submitted any stories yet!", "ownStories");
+}
+
+function putHiddenStoriesOnPage() {
+  showStoriesFromCategory("You have not hidden any stories yet!", "hidden");
 }
 
 async function addSubmittedStory() {
@@ -110,16 +126,17 @@ function checkInputValidity($form) {
   });
 }
 
-function putUserStoriesOnPage() {
-  $allStoriesList.empty();
-  if (currentUser.ownStories.length === 0) {
-    $allStoriesList.text("You haven't submitted any stories yet!");
-  } else {
-    for (let story of currentUser.ownStories) {
-      const $story = generateStoryMarkup(new Story(story));
-      $allStoriesList.append($story);
-    }
-  }
+function addToHidden(storyID) {
+  let hiddenStory = storyList.getStory(storyID);
+  currentUser.hidden.splice(0, 0, hiddenStory);
+  localStorage.setItem("hidden", JSON.stringify(currentUser.hidden));
+}
+
+function removeFromHidden(storyID) {
+  let hiddenStory = storyList.getStory(storyID);
+  let storyIndex = currentUser.hidden.indexOf(hiddenStory);
+  currentUser.hidden.splice(storyIndex, 1);
+  localStorage.setItem("hidden", JSON.stringify(currentUser.hidden));
 }
 
 $("#submit-story-button").on("click", (evt) => {
@@ -130,4 +147,17 @@ $("#submit-story-button").on("click", (evt) => {
 $allStoriesList.on("click", "i.fa-star", (evt) => {
   $(evt.target).toggleClass("fa");
   User.toggleStoryAsFavorite($(evt.target).parent().attr("id"));
+});
+
+$allStoriesList.on("click", "i.fa-eye-slash", (evt) => {
+  let storyID = $(evt.target).parent().attr("id").trim();
+  addToHidden(storyID);
+  $(evt.target).parent().hide();
+  $("#nav-hidden-stories-container").show();
+});
+
+$allStoriesList.on("click", "i.fa-eye", (evt) => {
+  let storyID = $(evt.target).parent().attr("id").trim();
+  removeFromHidden(storyID);
+  $(evt.target).parent().hide();
 });

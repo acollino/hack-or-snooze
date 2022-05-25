@@ -87,6 +87,15 @@ class StoryList {
     user.ownStories.splice(0, 0, addedStory);
     return addedStory;
   }
+
+  getStory(storyID) {
+    for (let x = 0; x < this.stories.length; x++){
+      if (this.stories[x].storyId === storyID) {
+        return this.stories[x];
+      }
+    }
+    return null;
+  }
 }
 
 /******************************************************************************
@@ -101,7 +110,8 @@ class User {
 
   constructor(
     { username, name, createdAt, favorites = [], ownStories = [] },
-    token
+    token,
+    hidden = []
   ) {
     this.username = username;
     this.name = name;
@@ -113,6 +123,9 @@ class User {
 
     // store the login token on the user so it's easy to find for API calls.
     this.loginToken = token;
+
+    //stories that the user has hidden from view
+    this.hidden = hidden;
   }
 
   /** Register new user in API, make User instance & return it.
@@ -184,6 +197,11 @@ class User {
 
       let { user } = response.data;
 
+      let hidden;
+      localStorage.getItem("hidden")
+        ? hidden = JSON.parse(localStorage.getItem("hidden"))
+        : hidden = [];
+      
       return new User(
         {
           username: user.username,
@@ -192,7 +210,8 @@ class User {
           favorites: user.favorites,
           ownStories: user.stories,
         },
-        token
+        token,
+        hidden,
       );
     } catch (err) {
       console.error("loginViaStoredCredentials failed", err);
@@ -201,10 +220,11 @@ class User {
   }
 
   isFavoriteStory(storyID) {
-    return Boolean(
-      this.favorites.filter((story) => {
-        return story.storyId === storyID;
-      })[0]);
+    return this.favorites.some((story) => story.storyId === storyID);
+  }
+
+  isHiddenStory(storyID) {
+    return this.hidden.some((story) => story.storyId === storyID);
   }
 
   static async toggleStoryAsFavorite(selectedStoryID) {
