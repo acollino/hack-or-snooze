@@ -37,16 +37,16 @@ function generateStoryMarkup(story, showHidden = false) {
 
 function generateStoryStyles(story, showHidden = false) {
   let starType;
-  currentUser.isFavoriteStory(story.storyId)
+  currentUser && currentUser.isFavoriteStory(story.storyId)
     ? (starType = `<i class="far fa-star fa"></i>`)
     : (starType = `<i class="far fa-star"></i>`);
   let hidden = "";
-  if (currentUser.isHiddenStory(story.storyId) && !showHidden) {
+  if (!showHidden && currentUser && currentUser.isHiddenStory(story.storyId)) {
     hidden = `style="display: none"`;
   }
   let userStyle;
   let trash = "";
-  if (currentUser.username === story.username) {
+  if (currentUser && currentUser.username === story.username) {
     userStyle = `posted by <b><i>${story.username}</i></b>`;
     trash = `<i class="far fa-trash-alt"></i>`;
   } else {
@@ -67,16 +67,16 @@ function showStoriesFromCategory(emptyMessage, storyCategory = "") {
   $allStoriesList.empty();
   let storyContainer;
   storyCategory === ""
-    ? storyContainer = storyList.stories
-    : storyContainer = currentUser[storyCategory];
+    ? (storyContainer = storyList.stories)
+    : (storyContainer = currentUser[storyCategory]);
   if (storyContainer.length === 0) {
     $allStoriesList.text(emptyMessage);
   } else {
     for (let story of storyContainer) {
       let $story;
       storyCategory === "hidden"
-        ? $story = generateStoryMarkup(new Story(story), true)
-        : $story = generateStoryMarkup(new Story(story));
+        ? ($story = generateStoryMarkup(new Story(story), true))
+        : ($story = generateStoryMarkup(new Story(story)));
       $allStoriesList.append($story);
     }
   }
@@ -92,7 +92,10 @@ function putFavoritesOnPage() {
 }
 
 function putUserStoriesOnPage() {
-  showStoriesFromCategory("You have not submitted any stories yet!", "ownStories");
+  showStoriesFromCategory(
+    "You have not submitted any stories yet!",
+    "ownStories"
+  );
 }
 
 function putHiddenStoriesOnPage() {
@@ -145,8 +148,10 @@ $("#submit-story-button").on("click", (evt) => {
 });
 
 $allStoriesList.on("click", "i.fa-star", (evt) => {
-  $(evt.target).toggleClass("fa");
-  User.toggleStoryAsFavorite($(evt.target).parent().attr("id"));
+  if (currentUser) {
+    $(evt.target).toggleClass("fa");
+    User.toggleStoryAsFavorite($(evt.target).parent().attr("id"));
+  }
 });
 
 $allStoriesList.on("click", "i.fa-eye-slash", (evt) => {
