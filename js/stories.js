@@ -23,8 +23,13 @@ function generateStoryMarkup(story) {
   // console.debug("generateStoryMarkup", story);
 
   const hostName = story.getHostName();
+  let starType;
+  currentUser.isFavoriteStory(story.storyId)
+    ? starType = '"far fa-star fa"'
+    : starType = '"far fa-star"';
   return $(`
       <li id="${story.storyId}">
+        <i class=${starType}></i>
         <a href="${story.url}" target="a_blank" class="story-link">
           ${story.title}
         </a>
@@ -49,4 +54,43 @@ function putStoriesOnPage() {
   }
 
   $allStoriesList.show();
+}
+
+function putFavoritesOnPage() {
+  $allStoriesList.empty();
+  if (currentUser.favorites.length === 0) {
+    $allStoriesList.text("No favorite stories to show!");
+  } else {
+    for (let story of currentUser.favorites) {
+      const $story = generateStoryMarkup(new Story(story));
+      $allStoriesList.append($story);
+    }
+  }
+}
+
+async function addSubmittedStory() {
+  const $storyForm = $("#submit-story-form");
+  let storyInput = {
+    author: $("#story-author").val(),
+    title: $("#story-title").val(),
+    url: $("#story-url").val(),
+  };
+  if (!checkInputValidity($storyForm)) {
+    return;
+  }
+  try {
+    let newStory = await storyList.addStory(currentUser, storyInput);
+    $allStoriesList.prepend(generateStoryMarkup(newStory));
+    $storyForm.find("input").val("");
+    $storyForm.hide();
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+function checkInputValidity($form) {
+  let inputElementArray = $form.find("input").get();
+  return inputElementArray.every((element) => {
+    return element.reportValidity();
+  });
 }
