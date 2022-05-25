@@ -155,18 +155,22 @@ $allStoriesList.on("click", "i.fa-star", (evt) => {
 });
 
 $allStoriesList.on("click", "i.fa-eye-slash", (evt) => {
-  let storyID = $(evt.target).parent().attr("id").trim();
-  addToHidden(storyID);
-  $(evt.target).parent().hide();
-  $("#nav-hidden-stories-container").show();
+  if (currentUser) {
+    let storyID = $(evt.target).parent().attr("id").trim();
+    addToHidden(storyID);
+    $(evt.target).parent().hide();
+    $("#nav-hidden-stories-container").show();
+  }
 });
 
 $allStoriesList.on("click", "i.fa-eye", (evt) => {
-  let storyID = $(evt.target).parent().attr("id").trim();
-  removeFromHidden(storyID);
-  $(evt.target).parent().hide();
-  if (currentUser.hidden.length === 0) {
-    $("#nav-hidden-stories-container").hide();
-    putStoriesOnPage();
+  if (currentUser) {
+    let storyID = $(evt.target).parent().attr("id").trim();
+    removeFromHidden(storyID);
+    $(evt.target).parent().hide();
+    if (currentUser.hidden.length === 0) {
+      $("#nav-hidden-stories-container").hide();
+      putStoriesOnPage();
+    }
   }
 });
