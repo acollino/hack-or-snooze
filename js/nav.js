@@ -13,6 +13,10 @@ function navAllStories(evt) {
 }
 
 $body.on("click", "#nav-all", navAllStories);
+$body.on("click", "#nav-submit", () => $("#submit-story-form").toggle());
+$body.on("click", "#nav-favorites", putFavoritesOnPage);
+$body.on("click", "#nav-my-stories", putUserStoriesOnPage);
+$body.on("click", "#nav-hidden-stories", putHiddenStoriesOnPage);
 
 /** Show login/signup on click on "login" */
 
@@ -30,6 +34,9 @@ $navLogin.on("click", navLoginClick);
 function updateNavOnLogin() {
   console.debug("updateNavOnLogin");
   $(".main-nav-links").show();
+  if (currentUser.hidden.length) {
+    $("#nav-hidden-stories-container").show();
+  }
   $navLogin.hide();
   $navLogOut.show();
   $navUserProfile.text(`${currentUser.username}`).show();

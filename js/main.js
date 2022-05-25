@@ -20,35 +20,14 @@ const $navLogOut = $("#nav-logout");
  */
 
 function hidePageComponents() {
-  const components = [
-    $allStoriesList,
-    $loginForm,
-    $signupForm,
-  ];
-  components.forEach(c => c.hide());
-}
-
-function setupEventListeners() {
-  $("#nav-submit").on("click", () => $("#submit-story-form").toggle());
-  $("#nav-favorites").on("click", putFavoritesOnPage);
-  $("#nav-my-stories").on("click",);
-  $("#nav-my-stories").on("click",);
-  $("#submit-story-button").on("click", (evt) => {
-    evt.preventDefault();
-    addSubmittedStory();
-  });
-  $allStoriesList.on("click", "i", (evt) => {
-    $(evt.target).toggleClass("fa");
-    User.toggleStoryAsFavorite($(evt.target).parent().attr("id"));
-  })
+  const components = [$allStoriesList, $loginForm, $signupForm];
+  components.forEach((c) => c.hide());
 }
 
 /** Overall function to kick off the app. */
 
 async function start() {
   console.debug("start");
-
-  setupEventListeners();
 
   // "Remember logged-in user" and log in, if credentials in localStorage
   await checkForRememberedUser();
@@ -60,8 +39,10 @@ async function start() {
 
 // Once the DOM is entirely loaded, begin the app
 
-console.warn("HEY STUDENT: This program sends many debug messages to" +
-  " the console. If you don't see the message 'start' below this, you're not" +
-  " seeing those helpful debug messages. In your browser console, click on" +
-  " menu 'Default Levels' and add Verbose");
+console.warn(
+  "HEY STUDENT: This program sends many debug messages to" +
+    " the console. If you don't see the message 'start' below this, you're not" +
+    " seeing those helpful debug messages. In your browser console, click on" +
+    " menu 'Default Levels' and add Verbose"
+);
 $(start);
