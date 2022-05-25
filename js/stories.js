@@ -160,4 +160,8 @@ $allStoriesList.on("click", "i.fa-eye", (evt) => {
   let storyID = $(evt.target).parent().attr("id").trim();
   removeFromHidden(storyID);
   $(evt.target).parent().hide();
+  if (currentUser.hidden.length === 0) {
+    $("#nav-hidden-stories-container").hide();
+    putStoriesOnPage();
+  }
 });
