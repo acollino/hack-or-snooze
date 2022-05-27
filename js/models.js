@@ -51,12 +51,14 @@ class StoryList {
    */
 
   static async getStories() {
-    // Note presence of `static` keyword: this indicates that getStories is
-    //  **not** an instance method. Rather, it is a method that is called on the
-    //  class directly. Why doesn't it make sense for getStories to be an
-    //  instance method?
-    //  -The getStories method doesn't require anything that would be unique to
-    //    a StoryList instance, so it makes more sense to keep it a static method.
+    /* Note presence of `static` keyword: this indicates that getStories is
+        **not** an instance method. Rather, it is a method that is called on the
+        class directly. Why doesn't it make sense for getStories to be an
+        instance method?
+
+       -The getStories method doesn't require anything that would be unique to
+        a StoryList instance, so it makes more sense to keep it a static method.
+    */
 
     // query the /stories endpoint (no auth required)
     const response = await axios({

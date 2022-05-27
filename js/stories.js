@@ -211,11 +211,5 @@ $allStoriesList.on("click", "i.fa-trash-alt", (evt) => {
         $("#nav-hidden-stories-container").hide();
       }
     });
-
-    /*add toasts
-
-      fix submit hanging around
-      fix login hanging around (when create account with passw filled for the login section)
-    */
   }
 });
