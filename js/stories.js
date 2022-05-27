@@ -174,13 +174,20 @@ $allStoriesList.on("click", "i.fa-eye", (evt) => {
 $allStoriesList.on("click", "i.fa-trash-alt", (evt) => {
   if (currentUser) {
     let storyID = $(evt.target).parent().attr("id").trim();
-    storyList.deleteStory(storyID);
-    $(evt.target).parent().hide();
-  }
-  if (
-    $allStoriesList.children().not('li[style*="display: none"]').length === 0
-  ) {
-    //todo logic here for if the current view is empty
+    storyList.deleteStory(storyID).then(() => {
+      $(evt.target).parent().remove();
+      let numVisibleStories = $allStoriesList
+        .children()
+        .not('li[style*="display: none"]').length;
+      if (numVisibleStories === 0) {
+        hidePageComponents();
+        putStoriesOnPage();
+        if (currentUser.hidden.length === 0) {
+          $("#nav-hidden-stories-container").hide();
+        }
+      }
+    });
+
     /*add toasts
 
       fix submit hanging around
@@ -190,6 +197,8 @@ $allStoriesList.on("click", "i.fa-trash-alt", (evt) => {
       catch if already deleted
       add trigger on icon
       remove specific story from DOM - maybe in the trigger?
+
+      fix submit stories adding to whatever list is displayed...maybe swap to main page before prepending?
     */
   }
 });

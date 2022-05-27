@@ -290,14 +290,16 @@ class User {
   }
 
   // Remove the story with a specific ID from all User arrays,
-  // which are ownStories, favorites, and hidden
+  // which are currently ownStories, favorites, and hidden
   removeStoryFromArrays(storyID) {
     for (let key of Object.keys(this)) {
       if (this[key] instanceof Array) {
         let userDeleteIndex = this.getIndexOfStory(key, storyID);
-        this[key].splice(userDeleteIndex, 1);
-        if (userDeleteIndex >= 0 && key === "hidden") {
-          localStorage.setItem("hidden", JSON.stringify(this.hidden));
+        if (userDeleteIndex >= 0) {
+          this[key].splice(userDeleteIndex, 1);
+          if (key === "hidden") {
+            localStorage.setItem("hidden", JSON.stringify(this.hidden));
+          }
         }
       }
     }
