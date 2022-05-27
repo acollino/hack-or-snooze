@@ -36,10 +36,10 @@ function generateStoryMarkup(story, showHidden = false) {
 }
 
 function generateStoryStyles(story, showHidden = false) {
-  let starType;
-  currentUser && currentUser.isFavoriteStory(story.storyId)
-    ? (starType = `<i class="far fa-star fa"></i>`)
-    : (starType = `<i class="far fa-star"></i>`);
+  let starType =
+    currentUser && currentUser.isFavoriteStory(story.storyId)
+      ? `<i class="far fa-star fa"></i>`
+      : `<i class="far fa-star"></i>`;
   let hidden = "";
   if (!showHidden && currentUser && currentUser.isHiddenStory(story.storyId)) {
     hidden = `style="display: none"`;
@@ -52,10 +52,9 @@ function generateStoryStyles(story, showHidden = false) {
   } else {
     userStyle = `posted by ${story.username}`;
   }
-  let eye;
-  showHidden
-    ? (eye = `<i class="far fa-eye"></i>`)
-    : (eye = `<i class="far fa-eye-slash"></i>`);
+  let eye = showHidden
+    ? `<i class="far fa-eye"></i>`
+    : `<i class="far fa-eye-slash"></i>`;
   return {
     icons: `${starType} ${eye} ${trash}`,
     userStyle,
@@ -63,40 +62,41 @@ function generateStoryStyles(story, showHidden = false) {
   };
 }
 
-function showStoriesFromCategory(emptyMessage, storyCategory = "") {
+function showStoriesFromCategory(storyCategory = "") {
   $allStoriesList.empty();
-  let storyContainer;
-  storyCategory === ""
-    ? (storyContainer = storyList.stories)
-    : (storyContainer = currentUser[storyCategory]);
-  if (storyContainer.length === 0) {
-    $allStoriesList.text(emptyMessage);
-  } else {
-    for (let story of storyContainer) {
-      let $story;
+  let storyContainer =
+    storyCategory === "" ? storyList.stories : currentUser[storyCategory];
+  for (let story of storyContainer) {
+    let $storyLI =
       storyCategory === "hidden"
-        ? ($story = generateStoryMarkup(new Story(story), true))
-        : ($story = generateStoryMarkup(new Story(story)));
-      $allStoriesList.append($story);
-    }
+        ? generateStoryMarkup(new Story(story), true)
+        : generateStoryMarkup(new Story(story));
+    $allStoriesList.append($storyLI);
   }
   $allStoriesList.show();
+  if (pageAppearsEmpty()) {
+    displayEmptyMessage();
+  }
 }
 
 function putStoriesOnPage() {
-  showStoriesFromCategory("No stories left to show you!");
+  storyList.currentDisplay = "nav-all";
+  showStoriesFromCategory();
 }
 
 function putFavoritesOnPage() {
-  showStoriesFromCategory("You don't have any favorites!", "favorites");
+  storyList.currentDisplay = "nav-favorites";
+  showStoriesFromCategory("favorites");
 }
 
 function putUserStoriesOnPage() {
-  showStoriesFromCategory("You have not submitted any stories!", "ownStories");
+  storyList.currentDisplay = "nav-my-stories";
+  showStoriesFromCategory("ownStories");
 }
 
 function putHiddenStoriesOnPage() {
-  showStoriesFromCategory("You don't have any hidden stories!", "hidden");
+  storyList.currentDisplay = "nav-hidden-stories";
+  showStoriesFromCategory("hidden");
 }
 
 async function addSubmittedStory() {
@@ -106,9 +106,6 @@ async function addSubmittedStory() {
     title: $("#story-title").val(),
     url: $("#story-url").val(),
   };
-  if (!checkInputValidity($storyForm)) {
-    return;
-  }
   try {
     let newStory = await storyList.addStory(currentUser, storyInput);
     $allStoriesList.prepend(generateStoryMarkup(newStory));
@@ -138,8 +135,34 @@ function removeFromHidden(storyID) {
   localStorage.setItem("hidden", JSON.stringify(currentUser.hidden));
 }
 
+function pageAppearsEmpty() {
+  let numVisibleStories = $allStoriesList
+    .children()
+    .not('li[style*="display: none"]').length;
+  return numVisibleStories === 0;
+}
+
+function displayEmptyMessage() {
+  if (storyList.currentDisplay === "nav-all") {
+    $allStoriesList.text("No stories left to show you!");
+  }
+  if (storyList.currentDisplay === "nav-favorites") {
+    $allStoriesList.text("You don't have any favorites!");
+  }
+  if (storyList.currentDisplay === "nav-my-stories") {
+    $allStoriesList.text("You have not submitted any stories!");
+  }
+  if (storyList.currentDisplay === "nav-hidden-stories") {
+    $allStoriesList.text("You don't have any hidden stories!");
+  }
+}
+
 $("#submit-story-button").on("click", (evt) => {
   evt.preventDefault();
+  if (!checkInputValidity($("#submit-story-form"))) {
+    return;
+  }
+  putStoriesOnPage();
   addSubmittedStory();
 });
 
@@ -156,6 +179,9 @@ $allStoriesList.on("click", "i.fa-eye-slash", (evt) => {
     addToHidden(storyID);
     $(evt.target).parent().hide();
     $("#nav-hidden-stories-container").show();
+    if (pageAppearsEmpty()) {
+      displayEmptyMessage();
+    }
   }
 });
 
@@ -167,7 +193,9 @@ $allStoriesList.on("click", "i.fa-eye", (evt) => {
     if (currentUser.hidden.length === 0) {
       $("#nav-hidden-stories-container").hide();
     }
-    putHiddenStoriesOnPage();
+    if (pageAppearsEmpty()) {
+      displayEmptyMessage();
+    }
   }
 });
 
@@ -176,15 +204,11 @@ $allStoriesList.on("click", "i.fa-trash-alt", (evt) => {
     let storyID = $(evt.target).parent().attr("id").trim();
     storyList.deleteStory(storyID).then(() => {
       $(evt.target).parent().remove();
-      let numVisibleStories = $allStoriesList
-        .children()
-        .not('li[style*="display: none"]').length;
-      if (numVisibleStories === 0) {
-        hidePageComponents();
-        putStoriesOnPage();
-        if (currentUser.hidden.length === 0) {
-          $("#nav-hidden-stories-container").hide();
-        }
+      if (pageAppearsEmpty()) {
+        displayEmptyMessage();
+      }
+      if (currentUser.hidden.length === 0) {
+        $("#nav-hidden-stories-container").hide();
       }
     });
 
@@ -192,13 +216,6 @@ $allStoriesList.on("click", "i.fa-trash-alt", (evt) => {
 
       fix submit hanging around
       fix login hanging around (when create account with passw filled for the login section)
-
-      delete:
-      catch if already deleted
-      add trigger on icon
-      remove specific story from DOM - maybe in the trigger?
-
-      fix submit stories adding to whatever list is displayed...maybe swap to main page before prepending?
     */
   }
 });

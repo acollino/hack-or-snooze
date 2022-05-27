@@ -39,6 +39,7 @@ class Story {
 class StoryList {
   constructor(stories) {
     this.stories = stories;
+    this.currentDisplay = "nav-all";
   }
 
   /** Generate a new StoryList. It:
