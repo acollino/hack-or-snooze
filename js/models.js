@@ -78,7 +78,7 @@ class StoryList {
    */
 
   async addStory(user, newStory) {
-    const response = await axios.post(`${BASE_URL}/stories`, {
+    const response = await axios.post(`${BASE_URL}/stories/`, {
       token: user.loginToken,
       story: { ...newStory },
     });
@@ -88,13 +88,47 @@ class StoryList {
     return addedStory;
   }
 
+  async deleteStory(storyID) {
+    let url = `${BASE_URL}/stories/${storyID}`;
+    let fetchInfo = {
+      method: "DELETE",
+      body: JSON.stringify({ token: currentUser.loginToken }),
+    };
+    let response = await fetch(url, fetchInfo);
+    if (response.ok) {
+      currentUser.removeStoryFromArrays(storyID);
+      this.removeStoryFromArray(storyID);
+    } else {
+      return Promise.reject({
+        status: response.status,
+        statusText: response.statusText,
+      });
+    }
+  }
+
+  // Given a storyID, return the story with that ID from the stories array
+
   getStory(storyID) {
-    for (let x = 0; x < this.stories.length; x++){
-      if (this.stories[x].storyId === storyID) {
-        return this.stories[x];
+    for (let story of this.stories) {
+      if (story.storyId === storyID) {
+        return story;
       }
     }
     return null;
+  }
+
+  /*  A very similar function is used in the User class; neither class
+      extends or inherits from the other, so I'm unsure if it would be
+      better to define this outside of the scope of the classes and just
+      reference it in each of them.
+
+      Given a storyID, remove the story with that ID from the stories array
+  */
+  removeStoryFromArray(storyID) {
+    let userDeleteIndex = this.stories
+      .map((story) => story.storyId)
+      .indexOf(storyID);
+    this.stories.splice(userDeleteIndex, 1);
   }
 }
 
@@ -197,11 +231,13 @@ class User {
 
       let { user } = response.data;
 
-      let hidden;
-      localStorage.getItem("hidden")
-        ? hidden = JSON.parse(localStorage.getItem("hidden"))
-        : hidden = [];
-      
+      let hidden = [];
+      if (localStorage.getItem("hidden")) {
+        hidden = JSON.parse(localStorage.getItem("hidden")).map(
+          (story) => new Story(story)
+        );
+      }
+
       return new User(
         {
           username: user.username,
@@ -211,7 +247,7 @@ class User {
           ownStories: user.stories,
         },
         token,
-        hidden,
+        hidden
       );
     } catch (err) {
       console.error("loginViaStoredCredentials failed", err);
@@ -230,21 +266,40 @@ class User {
   static async toggleStoryAsFavorite(selectedStoryID) {
     let url = `${BASE_URL}/users/${currentUser.username}/favorites/${selectedStoryID}`;
     let favoriteStatus = currentUser.isFavoriteStory(selectedStoryID);
-    let method;
-    favoriteStatus ? (method = "delete") : (method = "post");
+    let method = favoriteStatus ? "delete" : "post";
     let fetchInfo = {
       method,
       body: JSON.stringify({ token: currentUser.loginToken }),
     };
     let response = await fetch(url, fetchInfo);
     if (response.ok) {
-      currentUser.favorites = (await response.json()).user.favorites;
+      currentUser.favorites = (await response.json()).user.favorites.map(
+        (story) => new Story(story)
+      );
       return currentUser.favorites;
     } else {
       return Promise.reject({
         status: response.status,
         statusText: response.statusText,
       });
+    }
+  }
+
+  getIndexOfStory(arrayToSearch, storyID) {
+    return this[arrayToSearch].map((story) => story.storyId).indexOf(storyID);
+  }
+
+  // Remove the story with a specific ID from all User arrays,
+  // which are ownStories, favorites, and hidden
+  removeStoryFromArrays(storyID) {
+    for (let key of Object.keys(this)) {
+      if (this[key] instanceof Array) {
+        let userDeleteIndex = this.getIndexOfStory(key, storyID);
+        this[key].splice(userDeleteIndex, 1);
+        if (userDeleteIndex >= 0 && key === "hidden") {
+          localStorage.setItem("hidden", JSON.stringify(this.hidden));
+        }
+      }
     }
   }
 }

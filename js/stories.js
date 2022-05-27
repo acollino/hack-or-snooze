@@ -88,18 +88,15 @@ function putStoriesOnPage() {
 }
 
 function putFavoritesOnPage() {
-  showStoriesFromCategory("You have no favorites yet!", "favorites");
+  showStoriesFromCategory("You don't have any favorites!", "favorites");
 }
 
 function putUserStoriesOnPage() {
-  showStoriesFromCategory(
-    "You have not submitted any stories yet!",
-    "ownStories"
-  );
+  showStoriesFromCategory("You have not submitted any stories!", "ownStories");
 }
 
 function putHiddenStoriesOnPage() {
-  showStoriesFromCategory("You have not hidden any stories yet!", "hidden");
+  showStoriesFromCategory("You don't have any hidden stories!", "hidden");
 }
 
 async function addSubmittedStory() {
@@ -136,8 +133,7 @@ function addToHidden(storyID) {
 }
 
 function removeFromHidden(storyID) {
-  let hiddenStory = storyList.getStory(storyID);
-  let storyIndex = currentUser.hidden.indexOf(hiddenStory);
+  let storyIndex = currentUser.getIndexOfStory("hidden", storyID);
   currentUser.hidden.splice(storyIndex, 1);
   localStorage.setItem("hidden", JSON.stringify(currentUser.hidden));
 }
@@ -170,7 +166,30 @@ $allStoriesList.on("click", "i.fa-eye", (evt) => {
     $(evt.target).parent().hide();
     if (currentUser.hidden.length === 0) {
       $("#nav-hidden-stories-container").hide();
-      putStoriesOnPage();
     }
+    putHiddenStoriesOnPage();
+  }
+});
+
+$allStoriesList.on("click", "i.fa-trash-alt", (evt) => {
+  if (currentUser) {
+    let storyID = $(evt.target).parent().attr("id").trim();
+    storyList.deleteStory(storyID);
+    $(evt.target).parent().hide();
+  }
+  if (
+    $allStoriesList.children().not('li[style*="display: none"]').length === 0
+  ) {
+    //todo logic here for if the current view is empty
+    /*add toasts
+
+      fix submit hanging around
+      fix login hanging around (when create account with passw filled for the login section)
+
+      delete:
+      catch if already deleted
+      add trigger on icon
+      remove specific story from DOM - maybe in the trigger?
+    */
   }
 });
