@@ -36,17 +36,25 @@ function generateStoryMarkup(story, showHidden = false) {
 }
 
 function generateStoryStyles(story, showHidden = false) {
-  let starType =
-    currentUser && currentUser.isFavoriteStory(story.storyId)
-      ? `<i class="far fa-star fa"></i>`
-      : `<i class="far fa-star"></i>`;
+  if (!currentUser) {
+    return {
+      icons: "",
+      userStyle: `posted by ${story.username}`,
+      hidden: "",
+    };
+  }
+  let starType = currentUser.isFavoriteStory(story.storyId)
+    ? `<i class="far fa-star fa"></i>`
+    : `<i class="far fa-star"></i>`;
   let hidden = "";
-  if (!showHidden && currentUser && currentUser.isHiddenStory(story.storyId)) {
+  let storyShouldBeHidden =
+    !showHidden && currentUser.isHiddenStory(story.storyId);
+  if (storyShouldBeHidden) {
     hidden = `style="display: none"`;
   }
   let userStyle;
   let trash = "";
-  if (currentUser && currentUser.username === story.username) {
+  if (currentUser.username === story.username) {
     userStyle = `posted by <b><i>${story.username}</i></b>`;
     trash = `<i class="far fa-trash-alt"></i>`;
   } else {
