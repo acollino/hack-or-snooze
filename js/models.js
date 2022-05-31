@@ -11,22 +11,22 @@ class Story {
    *   - {title, author, url, username, storyId, createdAt}
    */
 
-  constructor({ storyId, title, author, url, username, createdAt }) {
-    this.storyId = storyId;
-    this.title = title;
-    this.author = author;
-    this.url = url;
-    this.username = username;
-    this.createdAt = createdAt;
+  constructor(storyObj) {
+    for (let key of Object.keys(storyObj)) {
+      this[key] = storyObj[key];
+    }
   }
 
-  /** Parses hostname out of URL and returns it. */
-  // UNIMPLEMENTED: complete this function!
-
+  /** Parses hostname out of URL and returns it.
+   *  Looks for the first sequence of word characters and periods
+   *  before a forward slash character
+   *
+   */
+  // Can test for yourself on https://regex101.com/r/VDnOl6/1
   getHostName() {
     let hostname = this.url.match(/[\w|\.]+((?=\/)|(?=$))/);
     if (!hostname) {
-      return "Hostname not found";
+      return null;
     }
     return hostname[0];
   }
@@ -39,6 +39,7 @@ class Story {
 class StoryList {
   constructor(stories) {
     this.stories = stories;
+    this.currentDisplay = "nav-all";
   }
 
   /** Generate a new StoryList. It:
@@ -50,12 +51,14 @@ class StoryList {
    */
 
   static async getStories() {
-    // Note presence of `static` keyword: this indicates that getStories is
-    //  **not** an instance method. Rather, it is a method that is called on the
-    //  class directly. Why doesn't it make sense for getStories to be an
-    //  instance method?
-    //  -The getStories method doesn't require anything that would be unique to
-    //    a StoryList instance, so it makes more sense to keep it a static method.
+    /* Note presence of `static` keyword: this indicates that getStories is
+        **not** an instance method. Rather, it is a method that is called on the
+        class directly. Why doesn't it make sense for getStories to be an
+        instance method?
+
+       -The getStories method doesn't require anything that would be unique to
+        a StoryList instance, so it makes more sense to keep it a static method.
+    */
 
     // query the /stories endpoint (no auth required)
     const response = await axios({
@@ -78,23 +81,69 @@ class StoryList {
    */
 
   async addStory(user, newStory) {
-    const response = await axios.post(`${BASE_URL}/stories`, {
-      token: user.loginToken,
-      story: { ...newStory },
-    });
-    let addedStory = new Story(response.data.story);
-    this.stories.splice(0, 0, addedStory);
-    user.ownStories.splice(0, 0, addedStory);
-    return addedStory;
+    let url = `${BASE_URL}/stories`;
+    let fetchInfo = {
+      method: "POST",
+      body: JSON.stringify({
+        token: user.loginToken,
+        story: newStory,
+      }),
+    };
+    let response = await fetch(url, fetchInfo);
+    if (response.ok) {
+      let addedStory = new Story((await response.json()).story);
+      this.stories.splice(0, 0, addedStory);
+      user.ownStories.splice(0, 0, addedStory);
+      return addedStory;
+    } else {
+      return Promise.reject({
+        status: response.status,
+        statusText: response.statusText,
+      });
+    }
   }
 
+  async deleteStory(storyID) {
+    let url = `${BASE_URL}/stories/${storyID}`;
+    let fetchInfo = {
+      method: "DELETE",
+      body: JSON.stringify({ token: currentUser.loginToken }),
+    };
+    let response = await fetch(url, fetchInfo);
+    if (response.ok) {
+      currentUser.removeStoryFromArrays(storyID);
+      this.removeStoryFromArray(storyID);
+    } else {
+      return Promise.reject({
+        status: response.status,
+        statusText: response.statusText,
+      });
+    }
+  }
+
+  // Given a storyID, return the story with that ID from the stories array
+
   getStory(storyID) {
-    for (let x = 0; x < this.stories.length; x++){
-      if (this.stories[x].storyId === storyID) {
-        return this.stories[x];
+    for (let story of this.stories) {
+      if (story.storyId === storyID) {
+        return story;
       }
     }
     return null;
+  }
+
+  /*  A very similar function is used in the User class; neither class
+      extends or inherits from the other, so I'm unsure if it would be
+      better to define this outside of the scope of the classes and just
+      reference it in each of them.
+
+      Given a storyID, remove the story with that ID from the stories array
+  */
+  removeStoryFromArray(storyID) {
+    let userDeleteIndex = this.stories
+      .map((story) => story.storyId)
+      .indexOf(storyID);
+    this.stories.splice(userDeleteIndex, 1);
   }
 }
 
@@ -197,11 +246,13 @@ class User {
 
       let { user } = response.data;
 
-      let hidden;
-      localStorage.getItem("hidden")
-        ? hidden = JSON.parse(localStorage.getItem("hidden"))
-        : hidden = [];
-      
+      let hidden = [];
+      if (localStorage.getItem("hidden")) {
+        hidden = JSON.parse(localStorage.getItem("hidden")).map(
+          (story) => new Story(story)
+        );
+      }
+
       return new User(
         {
           username: user.username,
@@ -211,7 +262,7 @@ class User {
           ownStories: user.stories,
         },
         token,
-        hidden,
+        hidden
       );
     } catch (err) {
       console.error("loginViaStoredCredentials failed", err);
@@ -230,21 +281,42 @@ class User {
   static async toggleStoryAsFavorite(selectedStoryID) {
     let url = `${BASE_URL}/users/${currentUser.username}/favorites/${selectedStoryID}`;
     let favoriteStatus = currentUser.isFavoriteStory(selectedStoryID);
-    let method;
-    favoriteStatus ? (method = "delete") : (method = "post");
+    let method = favoriteStatus ? "delete" : "post";
     let fetchInfo = {
       method,
       body: JSON.stringify({ token: currentUser.loginToken }),
     };
     let response = await fetch(url, fetchInfo);
     if (response.ok) {
-      currentUser.favorites = (await response.json()).user.favorites;
+      currentUser.favorites = (await response.json()).user.favorites.map(
+        (story) => new Story(story)
+      );
       return currentUser.favorites;
     } else {
       return Promise.reject({
         status: response.status,
         statusText: response.statusText,
       });
+    }
+  }
+
+  getIndexOfStory(arrayToSearch, storyID) {
+    return this[arrayToSearch].map((story) => story.storyId).indexOf(storyID);
+  }
+
+  // Remove the story with a specific ID from all User arrays,
+  // which are currently ownStories, favorites, and hidden
+  removeStoryFromArrays(storyID) {
+    for (let key of Object.keys(this)) {
+      if (this[key] instanceof Array) {
+        let userDeleteIndex = this.getIndexOfStory(key, storyID);
+        if (userDeleteIndex >= 0) {
+          this[key].splice(userDeleteIndex, 1);
+          if (key === "hidden") {
+            localStorage.setItem("hidden", JSON.stringify(this.hidden));
+          }
+        }
+      }
     }
   }
 }

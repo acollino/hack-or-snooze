@@ -9,6 +9,7 @@ const $allStoriesList = $("#all-stories-list");
 
 const $loginForm = $("#login-form");
 const $signupForm = $("#signup-form");
+const $storyForm = $("#submit-story-form");
 
 const $navLogin = $("#nav-login");
 const $navUserProfile = $("#nav-user-profile");
@@ -20,7 +21,7 @@ const $navLogOut = $("#nav-logout");
  */
 
 function hidePageComponents() {
-  const components = [$allStoriesList, $loginForm, $signupForm];
+  const components = [$allStoriesList, $loginForm, $signupForm, $storyForm];
   components.forEach((c) => c.hide());
 }
 
@@ -30,19 +31,13 @@ async function start() {
   console.debug("start");
 
   // "Remember logged-in user" and log in, if credentials in localStorage
-  await checkForRememberedUser();
-  await getAndShowStoriesOnStart();
+  await checkForRememberedUser(); //defined in user.js
+  await getAndShowStoriesOnStart(); //defined in stories.js
 
   // if we got a logged-in user
-  if (currentUser) updateUIOnUserLogin();
+  if (currentUser) updateUIOnUserLogin(); //defined in user.js
 }
 
 // Once the DOM is entirely loaded, begin the app
 
-console.warn(
-  "HEY STUDENT: This program sends many debug messages to" +
-    " the console. If you don't see the message 'start' below this, you're not" +
-    " seeing those helpful debug messages. In your browser console, click on" +
-    " menu 'Default Levels' and add Verbose"
-);
 $(start);

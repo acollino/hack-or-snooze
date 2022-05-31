@@ -7,16 +7,34 @@
 /** Show main list of all stories when click site name */
 
 function navAllStories(evt) {
-  console.debug("navAllStories", evt);
-  hidePageComponents();
-  putStoriesOnPage();
+  hidePageComponents(); //defined in main.js
+  putStoriesOnPage(); //defined in stories.js
 }
 
 $body.on("click", "#nav-all", navAllStories);
+
+function navFavorites(evt) {
+  hidePageComponents();
+  putFavoritesOnPage(); //defined in stories.js
+}
+
+$body.on("click", "#nav-favorites", navFavorites);
+
+function navUserStories(evt) {
+  hidePageComponents();
+  putUserStoriesOnPage(); //defined in stories.js
+}
+
+$body.on("click", "#nav-my-stories", navUserStories);
+
+function navHidden(evt) {
+  hidePageComponents();
+  putHiddenStoriesOnPage(); //defined in stories.js
+}
+
+$body.on("click", "#nav-hidden-stories", navHidden);
+
 $body.on("click", "#nav-submit", () => $("#submit-story-form").toggle());
-$body.on("click", "#nav-favorites", putFavoritesOnPage);
-$body.on("click", "#nav-my-stories", putUserStoriesOnPage);
-$body.on("click", "#nav-hidden-stories", putHiddenStoriesOnPage);
 
 /** Show login/signup on click on "login" */
 

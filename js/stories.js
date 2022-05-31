@@ -26,36 +26,44 @@ function generateStoryMarkup(story, showHidden = false) {
       <li id="${story.storyId}" ${hidden}>
         ${icons}
         <a href="${story.url}" target="a_blank" class="story-link">
-          ${story.title}
-        </a>
-        <small class="story-hostname">(${hostName})</small>
-        <small class="story-author">by ${story.author}</small>
+          ${story.title}</a>
+        <small>
+          <a href="${story.url}" target="a_blank" class="story-hostname">
+          (${hostName})</a>, by <i>${story.author}</i>
+        </small>
         <small class="story-user">${userStyle}</small>
       </li>
     `);
 }
 
 function generateStoryStyles(story, showHidden = false) {
-  let starType;
-  currentUser && currentUser.isFavoriteStory(story.storyId)
-    ? (starType = `<i class="far fa-star fa"></i>`)
-    : (starType = `<i class="far fa-star"></i>`);
+  if (!currentUser) {
+    return {
+      icons: "",
+      userStyle: `posted by ${story.username}`,
+      hidden: "",
+    };
+  }
+  let starType = currentUser.isFavoriteStory(story.storyId)
+    ? `<i class="far fa-star fa" title="Unfavorite"></i>`
+    : `<i class="far fa-star" title="Favorite"></i>`;
   let hidden = "";
-  if (!showHidden && currentUser && currentUser.isHiddenStory(story.storyId)) {
+  let storyShouldBeHidden =
+    !showHidden && currentUser.isHiddenStory(story.storyId);
+  if (storyShouldBeHidden) {
     hidden = `style="display: none"`;
   }
   let userStyle;
   let trash = "";
-  if (currentUser && currentUser.username === story.username) {
+  if (currentUser.username === story.username) {
     userStyle = `posted by <b><i>${story.username}</i></b>`;
-    trash = `<i class="far fa-trash-alt"></i>`;
+    trash = `<i class="far fa-trash-alt" title="Delete"></i>`;
   } else {
     userStyle = `posted by ${story.username}`;
   }
-  let eye;
-  showHidden
-    ? (eye = `<i class="far fa-eye"></i>`)
-    : (eye = `<i class="far fa-eye-slash"></i>`);
+  let eye = showHidden
+    ? `<i class="far fa-eye" title="Show"></i>`
+    : `<i class="far fa-eye-slash" title="Hide"></i>`;
   return {
     icons: `${starType} ${eye} ${trash}`,
     userStyle,
@@ -63,43 +71,41 @@ function generateStoryStyles(story, showHidden = false) {
   };
 }
 
-function showStoriesFromCategory(emptyMessage, storyCategory = "") {
+function showStoriesFromCategory(storyCategory = "") {
   $allStoriesList.empty();
-  let storyContainer;
-  storyCategory === ""
-    ? (storyContainer = storyList.stories)
-    : (storyContainer = currentUser[storyCategory]);
-  if (storyContainer.length === 0) {
-    $allStoriesList.text(emptyMessage);
-  } else {
-    for (let story of storyContainer) {
-      let $story;
+  let storyContainer =
+    storyCategory === "" ? storyList.stories : currentUser[storyCategory];
+  for (let story of storyContainer) {
+    let $storyLI =
       storyCategory === "hidden"
-        ? ($story = generateStoryMarkup(new Story(story), true))
-        : ($story = generateStoryMarkup(new Story(story)));
-      $allStoriesList.append($story);
-    }
+        ? generateStoryMarkup(new Story(story), true)
+        : generateStoryMarkup(new Story(story));
+    $allStoriesList.append($storyLI);
   }
   $allStoriesList.show();
+  if (pageAppearsEmpty()) {
+    displayEmptyMessage();
+  }
 }
 
 function putStoriesOnPage() {
-  showStoriesFromCategory("No stories left to show you!");
+  storyList.currentDisplay = "nav-all";
+  showStoriesFromCategory();
 }
 
 function putFavoritesOnPage() {
-  showStoriesFromCategory("You have no favorites yet!", "favorites");
+  storyList.currentDisplay = "nav-favorites";
+  showStoriesFromCategory("favorites");
 }
 
 function putUserStoriesOnPage() {
-  showStoriesFromCategory(
-    "You have not submitted any stories yet!",
-    "ownStories"
-  );
+  storyList.currentDisplay = "nav-my-stories";
+  showStoriesFromCategory("ownStories");
 }
 
 function putHiddenStoriesOnPage() {
-  showStoriesFromCategory("You have not hidden any stories yet!", "hidden");
+  storyList.currentDisplay = "nav-hidden-stories";
+  showStoriesFromCategory("hidden");
 }
 
 async function addSubmittedStory() {
@@ -109,9 +115,6 @@ async function addSubmittedStory() {
     title: $("#story-title").val(),
     url: $("#story-url").val(),
   };
-  if (!checkInputValidity($storyForm)) {
-    return;
-  }
   try {
     let newStory = await storyList.addStory(currentUser, storyInput);
     $allStoriesList.prepend(generateStoryMarkup(newStory));
@@ -136,14 +139,39 @@ function addToHidden(storyID) {
 }
 
 function removeFromHidden(storyID) {
-  let hiddenStory = storyList.getStory(storyID);
-  let storyIndex = currentUser.hidden.indexOf(hiddenStory);
+  let storyIndex = currentUser.getIndexOfStory("hidden", storyID);
   currentUser.hidden.splice(storyIndex, 1);
   localStorage.setItem("hidden", JSON.stringify(currentUser.hidden));
 }
 
+function pageAppearsEmpty() {
+  let numVisibleStories = $allStoriesList
+    .children()
+    .not('li[style*="display: none"]').length;
+  return numVisibleStories === 0;
+}
+
+function displayEmptyMessage() {
+  if (storyList.currentDisplay === "nav-all") {
+    $allStoriesList.text("No stories left to show you!");
+  }
+  if (storyList.currentDisplay === "nav-favorites") {
+    $allStoriesList.text("You don't have any favorites!");
+  }
+  if (storyList.currentDisplay === "nav-my-stories") {
+    $allStoriesList.text("You have not submitted any stories!");
+  }
+  if (storyList.currentDisplay === "nav-hidden-stories") {
+    $allStoriesList.text("You don't have any hidden stories!");
+  }
+}
+
 $("#submit-story-button").on("click", (evt) => {
   evt.preventDefault();
+  if (!checkInputValidity($("#submit-story-form"))) {
+    return;
+  }
+  putStoriesOnPage();
   addSubmittedStory();
 });
 
@@ -155,18 +183,42 @@ $allStoriesList.on("click", "i.fa-star", (evt) => {
 });
 
 $allStoriesList.on("click", "i.fa-eye-slash", (evt) => {
-  let storyID = $(evt.target).parent().attr("id").trim();
-  addToHidden(storyID);
-  $(evt.target).parent().hide();
-  $("#nav-hidden-stories-container").show();
+  if (currentUser) {
+    let storyID = $(evt.target).parent().attr("id").trim();
+    addToHidden(storyID);
+    $(evt.target).parent().hide();
+    $("#nav-hidden-stories-container").show();
+    if (pageAppearsEmpty()) {
+      displayEmptyMessage();
+    }
+  }
 });
 
 $allStoriesList.on("click", "i.fa-eye", (evt) => {
-  let storyID = $(evt.target).parent().attr("id").trim();
-  removeFromHidden(storyID);
-  $(evt.target).parent().hide();
-  if (currentUser.hidden.length === 0) {
-    $("#nav-hidden-stories-container").hide();
-    putStoriesOnPage();
+  if (currentUser) {
+    let storyID = $(evt.target).parent().attr("id").trim();
+    removeFromHidden(storyID);
+    $(evt.target).parent().hide();
+    if (currentUser.hidden.length === 0) {
+      $("#nav-hidden-stories-container").hide();
+    }
+    if (pageAppearsEmpty()) {
+      displayEmptyMessage();
+    }
+  }
+});
+
+$allStoriesList.on("click", "i.fa-trash-alt", (evt) => {
+  if (currentUser) {
+    let storyID = $(evt.target).parent().attr("id").trim();
+    storyList.deleteStory(storyID).then(() => {
+      $(evt.target).parent().remove();
+      if (pageAppearsEmpty()) {
+        displayEmptyMessage();
+      }
+      if (currentUser.hidden.length === 0) {
+        $("#nav-hidden-stories-container").hide();
+      }
+    });
   }
 });
