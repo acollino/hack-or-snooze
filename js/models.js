@@ -7,28 +7,30 @@ const BASE_URL = "https://hack-or-snooze-v3.herokuapp.com";
  */
 
 class Story {
-
   /** Make instance of Story from data object about story:
    *   - {title, author, url, username, storyId, createdAt}
    */
 
-  constructor({ storyId, title, author, url, username, createdAt }) {
-    this.storyId = storyId;
-    this.title = title;
-    this.author = author;
-    this.url = url;
-    this.username = username;
-    this.createdAt = createdAt;
+  constructor(storyObj) {
+    for (let key of Object.keys(storyObj)) {
+      this[key] = storyObj[key];
+    }
   }
 
-  /** Parses hostname out of URL and returns it. */
-
+  /** Parses hostname out of URL and returns it.
+   *  Looks for the first sequence of word characters and periods
+   *  before a forward slash character
+   *
+   */
+  // Can test for yourself on https://regex101.com/r/VDnOl6/1
   getHostName() {
-    // UNIMPLEMENTED: complete this function!
-    return "hostname.com";
+    let hostname = this.url.match(/[\w|\.]+((?=\/)|(?=$))/);
+    if (!hostname) {
+      return null;
+    }
+    return hostname[0];
   }
 }
-
 
 /******************************************************************************
  * List of Story instances: used by UI to show story lists in DOM.
@@ -37,6 +39,7 @@ class Story {
 class StoryList {
   constructor(stories) {
     this.stories = stories;
+    this.currentDisplay = "nav-all";
   }
 
   /** Generate a new StoryList. It:
@@ -48,10 +51,14 @@ class StoryList {
    */
 
   static async getStories() {
-    // Note presence of `static` keyword: this indicates that getStories is
-    //  **not** an instance method. Rather, it is a method that is called on the
-    //  class directly. Why doesn't it make sense for getStories to be an
-    //  instance method?
+    /* Note presence of `static` keyword: this indicates that getStories is
+        **not** an instance method. Rather, it is a method that is called on the
+        class directly. Why doesn't it make sense for getStories to be an
+        instance method?
+
+       -The getStories method doesn't require anything that would be unique to
+        a StoryList instance, so it makes more sense to keep it a static method.
+    */
 
     // query the /stories endpoint (no auth required)
     const response = await axios({
@@ -60,7 +67,7 @@ class StoryList {
     });
 
     // turn plain old story objects from API into instances of Story class
-    const stories = response.data.stories.map(story => new Story(story));
+    const stories = response.data.stories.map((story) => new Story(story));
 
     // build an instance of our own class using the new array of stories
     return new StoryList(stories);
@@ -73,11 +80,72 @@ class StoryList {
    * Returns the new Story instance
    */
 
-  async addStory( /* user, newStory */) {
-    // UNIMPLEMENTED: complete this function!
+  async addStory(user, newStory) {
+    let url = `${BASE_URL}/stories`;
+    let fetchInfo = {
+      method: "POST",
+      body: JSON.stringify({
+        token: user.loginToken,
+        story: newStory,
+      }),
+    };
+    let response = await fetch(url, fetchInfo);
+    if (response.ok) {
+      let addedStory = new Story((await response.json()).story);
+      this.stories.splice(0, 0, addedStory);
+      user.ownStories.splice(0, 0, addedStory);
+      return addedStory;
+    } else {
+      return Promise.reject({
+        status: response.status,
+        statusText: response.statusText,
+      });
+    }
+  }
+
+  async deleteStory(storyID) {
+    let url = `${BASE_URL}/stories/${storyID}`;
+    let fetchInfo = {
+      method: "DELETE",
+      body: JSON.stringify({ token: currentUser.loginToken }),
+    };
+    let response = await fetch(url, fetchInfo);
+    if (response.ok) {
+      currentUser.removeStoryFromArrays(storyID);
+      this.removeStoryFromArray(storyID);
+    } else {
+      return Promise.reject({
+        status: response.status,
+        statusText: response.statusText,
+      });
+    }
+  }
+
+  // Given a storyID, return the story with that ID from the stories array
+
+  getStory(storyID) {
+    for (let story of this.stories) {
+      if (story.storyId === storyID) {
+        return story;
+      }
+    }
+    return null;
+  }
+
+  /*  A very similar function is used in the User class; neither class
+      extends or inherits from the other, so I'm unsure if it would be
+      better to define this outside of the scope of the classes and just
+      reference it in each of them.
+
+      Given a storyID, remove the story with that ID from the stories array
+  */
+  removeStoryFromArray(storyID) {
+    let userDeleteIndex = this.stories
+      .map((story) => story.storyId)
+      .indexOf(storyID);
+    this.stories.splice(userDeleteIndex, 1);
   }
 }
-
 
 /******************************************************************************
  * User: a user in the system (only used to represent the current user)
@@ -89,24 +157,24 @@ class User {
    *   - token
    */
 
-  constructor({
-                username,
-                name,
-                createdAt,
-                favorites = [],
-                ownStories = []
-              },
-              token) {
+  constructor(
+    { username, name, createdAt, favorites = [], ownStories = [] },
+    token,
+    hidden = []
+  ) {
     this.username = username;
     this.name = name;
     this.createdAt = createdAt;
 
     // instantiate Story instances for the user's favorites and ownStories
-    this.favorites = favorites.map(s => new Story(s));
-    this.ownStories = ownStories.map(s => new Story(s));
+    this.favorites = favorites.map((s) => new Story(s));
+    this.ownStories = ownStories.map((s) => new Story(s));
 
     // store the login token on the user so it's easy to find for API calls.
     this.loginToken = token;
+
+    //stories that the user has hidden from view
+    this.hidden = hidden;
   }
 
   /** Register new user in API, make User instance & return it.
@@ -123,7 +191,7 @@ class User {
       data: { user: { username, password, name } },
     });
 
-    let { user } = response.data
+    let { user } = response.data;
 
     return new User(
       {
@@ -131,7 +199,7 @@ class User {
         name: user.name,
         createdAt: user.createdAt,
         favorites: user.favorites,
-        ownStories: user.stories
+        ownStories: user.stories,
       },
       response.data.token
     );
@@ -158,7 +226,7 @@ class User {
         name: user.name,
         createdAt: user.createdAt,
         favorites: user.favorites,
-        ownStories: user.stories
+        ownStories: user.stories,
       },
       response.data.token
     );
@@ -178,19 +246,77 @@ class User {
 
       let { user } = response.data;
 
+      let hidden = [];
+      if (localStorage.getItem("hidden")) {
+        hidden = JSON.parse(localStorage.getItem("hidden")).map(
+          (story) => new Story(story)
+        );
+      }
+
       return new User(
         {
           username: user.username,
           name: user.name,
           createdAt: user.createdAt,
           favorites: user.favorites,
-          ownStories: user.stories
+          ownStories: user.stories,
         },
-        token
+        token,
+        hidden
       );
     } catch (err) {
       console.error("loginViaStoredCredentials failed", err);
       return null;
+    }
+  }
+
+  isFavoriteStory(storyID) {
+    return this.favorites.some((story) => story.storyId === storyID);
+  }
+
+  isHiddenStory(storyID) {
+    return this.hidden.some((story) => story.storyId === storyID);
+  }
+
+  static async toggleStoryAsFavorite(selectedStoryID) {
+    let url = `${BASE_URL}/users/${currentUser.username}/favorites/${selectedStoryID}`;
+    let favoriteStatus = currentUser.isFavoriteStory(selectedStoryID);
+    let method = favoriteStatus ? "delete" : "post";
+    let fetchInfo = {
+      method,
+      body: JSON.stringify({ token: currentUser.loginToken }),
+    };
+    let response = await fetch(url, fetchInfo);
+    if (response.ok) {
+      currentUser.favorites = (await response.json()).user.favorites.map(
+        (story) => new Story(story)
+      );
+      return currentUser.favorites;
+    } else {
+      return Promise.reject({
+        status: response.status,
+        statusText: response.statusText,
+      });
+    }
+  }
+
+  getIndexOfStory(arrayToSearch, storyID) {
+    return this[arrayToSearch].map((story) => story.storyId).indexOf(storyID);
+  }
+
+  // Remove the story with a specific ID from all User arrays,
+  // which are currently ownStories, favorites, and hidden
+  removeStoryFromArrays(storyID) {
+    for (let key of Object.keys(this)) {
+      if (this[key] instanceof Array) {
+        let userDeleteIndex = this.getIndexOfStory(key, storyID);
+        if (userDeleteIndex >= 0) {
+          this[key].splice(userDeleteIndex, 1);
+          if (key === "hidden") {
+            localStorage.setItem("hidden", JSON.stringify(this.hidden));
+          }
+        }
+      }
     }
   }
 }

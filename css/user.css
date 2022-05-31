@@ -1,8 +1,7 @@
 /* Login and signup forms */
 
 .account-form button {
-  width: 4rem;
-  margin-left: 80px;
+  margin-left: 5rem;
 }
 
 #signup-form button {
@@ -10,5 +9,5 @@
 }
 
 .account-forms-container {
-  padding-left: 20px;
+  padding-left: 1.25rem;
 }
