@@ -7,29 +7,29 @@
 /** Show main list of all stories when click site name */
 
 function navAllStories(evt) {
-  hidePageComponents();
-  putStoriesOnPage();
+  hidePageComponents(); //defined in main.js
+  putStoriesOnPage(); //defined in stories.js
 }
 
 $body.on("click", "#nav-all", navAllStories);
 
 function navFavorites(evt) {
   hidePageComponents();
-  putFavoritesOnPage();
+  putFavoritesOnPage(); //defined in stories.js
 }
 
 $body.on("click", "#nav-favorites", navFavorites);
 
 function navUserStories(evt) {
   hidePageComponents();
-  putUserStoriesOnPage();
+  putUserStoriesOnPage(); //defined in stories.js
 }
 
 $body.on("click", "#nav-my-stories", navUserStories);
 
 function navHidden(evt) {
   hidePageComponents();
-  putHiddenStoriesOnPage();
+  putHiddenStoriesOnPage(); //defined in stories.js
 }
 
 $body.on("click", "#nav-hidden-stories", navHidden);

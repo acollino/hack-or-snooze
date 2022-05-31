@@ -2,10 +2,18 @@
 
 nav {
   display: flex;
+  flex-wrap: wrap;
   background-color: #ff6600;
   align-items: center;
-  padding: 5px 20px;
+  padding: 0.25rem 1.25rem;
   border-radius: 3px 3px 0 0;
+}
+
+#nav-icon {
+  border: 1px solid white;
+  box-sizing: border-box;
+  width: 1.25rem;
+  vertical-align: bottom;
 }
 
 .navbar-brand {
@@ -14,11 +22,12 @@ nav {
 
 .nav-link {
   font-size: 0.85rem;
-  margin: 0 3px;
+  margin: 0 0.2rem;
 }
 
 .nav-right {
   margin-left: auto;
+  padding-left: 3.75rem;
   text-align: right;
 }
 

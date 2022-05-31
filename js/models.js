@@ -11,22 +11,22 @@ class Story {
    *   - {title, author, url, username, storyId, createdAt}
    */
 
-  constructor({ storyId, title, author, url, username, createdAt }) {
-    this.storyId = storyId;
-    this.title = title;
-    this.author = author;
-    this.url = url;
-    this.username = username;
-    this.createdAt = createdAt;
+  constructor(storyObj) {
+    for (let key of Object.keys(storyObj)) {
+      this[key] = storyObj[key];
+    }
   }
 
-  /** Parses hostname out of URL and returns it. */
-  // UNIMPLEMENTED: complete this function!
-
+  /** Parses hostname out of URL and returns it.
+   *  Looks for the first sequence of word characters and periods
+   *  before a forward slash character
+   *
+   */
+  // Can test for yourself on https://regex101.com/r/VDnOl6/1
   getHostName() {
     let hostname = this.url.match(/[\w|\.]+((?=\/)|(?=$))/);
     if (!hostname) {
-      return "Hostname not found";
+      return null;
     }
     return hostname[0];
   }
@@ -81,14 +81,26 @@ class StoryList {
    */
 
   async addStory(user, newStory) {
-    const response = await axios.post(`${BASE_URL}/stories/`, {
-      token: user.loginToken,
-      story: { ...newStory },
-    });
-    let addedStory = new Story(response.data.story);
-    this.stories.splice(0, 0, addedStory);
-    user.ownStories.splice(0, 0, addedStory);
-    return addedStory;
+    let url = `${BASE_URL}/stories`;
+    let fetchInfo = {
+      method: "POST",
+      body: JSON.stringify({
+        token: user.loginToken,
+        story: newStory,
+      }),
+    };
+    let response = await fetch(url, fetchInfo);
+    if (response.ok) {
+      let addedStory = new Story((await response.json()).story);
+      this.stories.splice(0, 0, addedStory);
+      user.ownStories.splice(0, 0, addedStory);
+      return addedStory;
+    } else {
+      return Promise.reject({
+        status: response.status,
+        statusText: response.statusText,
+      });
+    }
   }
 
   async deleteStory(storyID) {

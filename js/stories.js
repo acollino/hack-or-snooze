@@ -26,10 +26,11 @@ function generateStoryMarkup(story, showHidden = false) {
       <li id="${story.storyId}" ${hidden}>
         ${icons}
         <a href="${story.url}" target="a_blank" class="story-link">
-          ${story.title}
-        </a>
-        <small class="story-hostname">(${hostName})</small>
-        <small class="story-author">by ${story.author}</small>
+          ${story.title}</a>
+        <small>
+          <a href="${story.url}" target="a_blank" class="story-hostname">
+          (${hostName})</a>, by <i>${story.author}</i>
+        </small>
         <small class="story-user">${userStyle}</small>
       </li>
     `);
@@ -44,8 +45,8 @@ function generateStoryStyles(story, showHidden = false) {
     };
   }
   let starType = currentUser.isFavoriteStory(story.storyId)
-    ? `<i class="far fa-star fa"></i>`
-    : `<i class="far fa-star"></i>`;
+    ? `<i class="far fa-star fa" title="Unfavorite"></i>`
+    : `<i class="far fa-star" title="Favorite"></i>`;
   let hidden = "";
   let storyShouldBeHidden =
     !showHidden && currentUser.isHiddenStory(story.storyId);
@@ -56,13 +57,13 @@ function generateStoryStyles(story, showHidden = false) {
   let trash = "";
   if (currentUser.username === story.username) {
     userStyle = `posted by <b><i>${story.username}</i></b>`;
-    trash = `<i class="far fa-trash-alt"></i>`;
+    trash = `<i class="far fa-trash-alt" title="Delete"></i>`;
   } else {
     userStyle = `posted by ${story.username}`;
   }
   let eye = showHidden
-    ? `<i class="far fa-eye"></i>`
-    : `<i class="far fa-eye-slash"></i>`;
+    ? `<i class="far fa-eye" title="Show"></i>`
+    : `<i class="far fa-eye-slash" title="Hide"></i>`;
   return {
     icons: `${starType} ${eye} ${trash}`,
     userStyle,

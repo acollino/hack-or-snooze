@@ -110,7 +110,7 @@ function saveUserCredentialsInLocalStorage() {
 function updateUIOnUserLogin() {
   console.debug("updateUIOnUserLogin");
 
-  navAllStories();
+  navAllStories(); //defined in nav.js
 
-  updateNavOnLogin();
+  updateNavOnLogin(); //defined in nav.js
 }
