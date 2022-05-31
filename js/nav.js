@@ -39,7 +39,6 @@ $body.on("click", "#nav-submit", () => $("#submit-story-form").toggle());
 /** Show login/signup on click on "login" */
 
 function navLoginClick(evt) {
-  console.debug("navLoginClick", evt);
   hidePageComponents();
   $loginForm.show();
   $signupForm.show();
@@ -50,7 +49,6 @@ $navLogin.on("click", navLoginClick);
 /** When a user first logins in, update the navbar to reflect that. */
 
 function updateNavOnLogin() {
-  console.debug("updateNavOnLogin");
   $(".main-nav-links").show();
   if (currentUser.hidden.length) {
     $("#nav-hidden-stories-container").show();

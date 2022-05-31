@@ -28,7 +28,6 @@ function hidePageComponents() {
 /** Overall function to kick off the app. */
 
 async function start() {
-  console.debug("start");
 
   // "Remember logged-in user" and log in, if credentials in localStorage
   await checkForRememberedUser(); //defined in user.js

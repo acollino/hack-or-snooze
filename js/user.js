@@ -10,7 +10,6 @@ let currentUser;
 /** Handle login form submission. If login ok, sets up the user instance */
 
 async function login(evt) {
-  console.debug("login", evt);
   evt.preventDefault();
 
   // grab the username and password
@@ -32,7 +31,6 @@ $loginForm.on("submit", login);
 /** Handle signup form submission. */
 
 async function signup(evt) {
-  console.debug("signup", evt);
   evt.preventDefault();
 
   const name = $("#signup-name").val();
@@ -57,7 +55,6 @@ $signupForm.on("submit", signup);
  */
 
 function logout(evt) {
-  console.debug("logout", evt);
   localStorage.clear();
   location.reload();
 }
@@ -73,7 +70,6 @@ $navLogOut.on("click", logout);
  */
 
 async function checkForRememberedUser() {
-  console.debug("checkForRememberedUser");
   const token = localStorage.getItem("token");
   const username = localStorage.getItem("username");
   if (!token || !username) return false;
@@ -89,7 +85,6 @@ async function checkForRememberedUser() {
  */
 
 function saveUserCredentialsInLocalStorage() {
-  console.debug("saveUserCredentialsInLocalStorage");
   if (currentUser) {
     localStorage.setItem("token", currentUser.loginToken);
     localStorage.setItem("username", currentUser.username);
@@ -108,8 +103,6 @@ function saveUserCredentialsInLocalStorage() {
  */
 
 function updateUIOnUserLogin() {
-  console.debug("updateUIOnUserLogin");
-
   navAllStories(); //defined in nav.js
 
   updateNavOnLogin(); //defined in nav.js
